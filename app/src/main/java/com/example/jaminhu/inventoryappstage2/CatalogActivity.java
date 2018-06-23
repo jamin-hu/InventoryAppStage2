@@ -7,7 +7,6 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -18,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.example.jaminhu.inventoryappstage2.data.InventoryContract.InventoryEntry;
 
@@ -45,15 +43,18 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         which is of course the job of a loader, therefore requiring us to implement the LoaderCallback interface?
          */
         listView.setAdapter(mCursorAdapter);
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
 
-                intent.setData(ContentUris.withAppendedId(InventoryEntry.CONTENT_URI, id));
+                Uri uri = ContentUris.withAppendedId(InventoryEntry.CONTENT_URI, id);
+                intent.setData(uri);
                 /* Wait ok so now we're relying on the fact that luckily, the id of the listViewItem we are given
                 can be equated to the id of the item in the table?
                 */
+
                 startActivity(intent);
             }
         });

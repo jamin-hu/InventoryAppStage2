@@ -9,15 +9,16 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.example.jaminhu.inventoryappstage2.data.InventoryContract.InventoryEntry;
 
 public class InventoryProvider extends ContentProvider {
 
-    /** URI matcher code for the content URI for the pets table */
-    private static final int INVENTORY = 100;
+    public static final String LOG_TAG = InventoryProvider.class.getSimpleName();
 
-    /** URI matcher code for the content URI for a single pet in the pets table */
+    private static final int INVENTORY_ID = 100;
+
     private static final int ITEM_ID = 101;
 
     private InventoryDbHelper mDbHelper;
@@ -34,7 +35,7 @@ public class InventoryProvider extends ContentProvider {
         // should recognize. All paths added to the UriMatcher have a corresponding code to return
         // when a match is found.
 
-        sUriMatcher.addURI(InventoryContract.CONTENT_AUTHORITY, InventoryContract.INVENTORY_PATH , INVENTORY);
+        sUriMatcher.addURI(InventoryContract.CONTENT_AUTHORITY, InventoryContract.INVENTORY_PATH , INVENTORY_ID);
         sUriMatcher.addURI(InventoryContract.CONTENT_AUTHORITY, InventoryContract.INVENTORY_PATH + "/#", ITEM_ID);
     }
 
@@ -56,7 +57,7 @@ public class InventoryProvider extends ContentProvider {
         int match = sUriMatcher.match(uri);
 
         switch (match){
-            case (INVENTORY):
+            case (INVENTORY_ID):
                 cursor = db.query(InventoryEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
             case (ITEM_ID):
@@ -81,11 +82,11 @@ public class InventoryProvider extends ContentProvider {
     @Override
     public String getType(@NonNull Uri uri) {
 /*
-still not sure what this does exactly... and why necessary
+still not sure what this does exactly... and why necessary... yet...
  */
         final int match = sUriMatcher.match(uri);
         switch (match) {
-            case INVENTORY:
+            case INVENTORY_ID:
                 return InventoryEntry.CONTENT_LIST_TYPE;
             case ITEM_ID:
                 return InventoryEntry.CONTENT_ITEM_TYPE;
@@ -101,7 +102,7 @@ still not sure what this does exactly... and why necessary
 
         final int match = sUriMatcher.match(uri);
         switch (match) {
-            case INVENTORY:
+            case INVENTORY_ID:
                 return insertItem(uri, values);
             default:
                 throw new IllegalArgumentException("Insertion is not supported for " + uri);
@@ -110,7 +111,6 @@ still not sure what this does exactly... and why necessary
 
     private Uri insertItem(Uri uri, ContentValues values){
 
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         String name = values.getAsString(InventoryEntry.NAME_COLUMN);
         if (name == null) {
@@ -127,9 +127,14 @@ still not sure what this does exactly... and why necessary
             throw new IllegalArgumentException("Pet requires a valid weight");
         }
 
-
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         long id = db.insert(InventoryEntry.TABLE_NAME, null, values);
+
+        if (id == -1) {
+            Log.e(LOG_TAG, "Failed to insert row for " + uri);
+            return null;
+        }
 
         getContext().getContentResolver().notifyChange(uri, null);
 
@@ -145,7 +150,7 @@ still not sure what this does exactly... and why necessary
 
         final int match = sUriMatcher.match(uri);
         switch (match) {
-            case INVENTORY:
+            case INVENTORY_ID:
                 rowsDeleted = db.delete(InventoryEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case ITEM_ID:
@@ -163,18 +168,63 @@ still not sure what this does exactly... and why necessary
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
         /*
-        Ok so this is pretty much the class that contains methods that take in URI's and turn them into sql commands?
+        Ok so this whole class is pretty much the class that contains methods that take in URI's and turn them into sql commands?
          */
 
-        SQLiteDatabase db =mDbHelper.getWritableDatabase();
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            /*
+            I mean technically, does there even need to be this switch statement here in the update() as well as in the insert()?
+            Because the update is only called from the EditorView when it was opened through a ListView item click, and the insert()
+            is only called from the EditorView when it was opened through the FAB button thing... so it's pretty much guaranteed that the
+            MIME type will always be an item type for the update() method, and table type for the insert() method?
+             */
+            case ITEM_ID:
+                // For the PET_ID code, extract out the ID from the URI,
+                // so we know which row to update. Selection will be "_id=?" and selection
+                // arguments will be a String array containing the actual ID.
+                selection = InventoryEntry._ID + "=?";
+                selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+                return updatePet(uri, values, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Update is not supported for " + uri);
+        }
+    }
 
-        selection = InventoryEntry._ID + "=?";
-        selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+    private int updatePet(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 
-        int rowsUpdated = db.update(InventoryEntry.TABLE_NAME, values, selection, selectionArgs);
+        if (values.containsKey(InventoryEntry.NAME_COLUMN)) {
+            String name = values.getAsString(InventoryEntry.NAME_COLUMN);
+            if (name == null) {
+                throw new IllegalArgumentException("Pet requires a name");
+            }
+        }
 
-        getContext().getContentResolver().notifyChange(uri, null);
+        if (values.containsKey(InventoryEntry.PRICE_COLUMN)) {
+            Integer price = values.getAsInteger(InventoryEntry.PRICE_COLUMN);
+            if (price == null || price < 0) {
+                throw new IllegalArgumentException("Pet requires valid gender");
+            }
+        }
 
-        return rowsUpdated;
+        if (values.containsKey(InventoryEntry.QUANTITY_COLUMN)) {
+            Integer quantity = values.getAsInteger(InventoryEntry.QUANTITY_COLUMN);
+            if (quantity != null && quantity < 0) {
+                throw new IllegalArgumentException("Pet requires valid weight");
+            }
+        }
+
+        if(values.size() == 0){
+            return 0;
+        } else {
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+            int numOfRows = db.update(InventoryEntry.TABLE_NAME, values, selection, selectionArgs);
+
+            if (numOfRows !=0){
+                getContext().getContentResolver().notifyChange(uri, null);
+            }
+            return numOfRows;
+        }
+
     }
 }

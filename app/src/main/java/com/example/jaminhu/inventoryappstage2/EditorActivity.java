@@ -16,18 +16,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.jaminhu.inventoryappstage2.data.InventoryContract.InventoryEntry;
-
-import org.w3c.dom.Text;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static android.view.View.GONE;
 
@@ -65,10 +60,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mContactButton = (Button) findViewById(R.id.contact_button);
         mContactButton.setVisibility(GONE);
 
-        if (!mQuantityView.getText().toString().isEmpty()) {
-            mQuantityView.setText(0);
-        }
-
         mSubtractButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -89,40 +80,28 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             }
         });
 
-        if (mContentUri== null){
+        if (mContentUri == null){
             setTitle(getString(R.string.editor_activity_title_new_item));
+            mQuantityView.setText("0");
             invalidateOptionsMenu();
             //Wait, so what does this actually do/call? Does this eventually call the onPrepareOptionsMenu?
         } else {
-
-            setTitle(getString(R.string.editor_activity_title_edit_item));
-
-            final String supplierContact = mSupplierContactView.getText().toString().trim();
-
-            if (isValidEmail(supplierContact)){
-                Toast.makeText(this, "This guy has a valid e-mail!",
-                        Toast.LENGTH_LONG).show();
-                mContactButton.setVisibility(View.VISIBLE);
-
-                mContactButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(Intent.ACTION_SEND);
-                        intent.setType("*/*");
-                        intent.putExtra(Intent.EXTRA_EMAIL, supplierContact);
-                        startActivity(intent);
-                    }
-                });
-            }
-
             getLoaderManager().initLoader(LOADER_ID, null, this);
+            setTitle(getString(R.string.editor_activity_title_edit_item));
         }
+
+        mNameView.setOnTouchListener(mTouchListener);
+        mPriceView.setOnTouchListener(mTouchListener);
+        mQuantityView.setOnTouchListener(mTouchListener);
+        mSupplierView.setOnTouchListener(mTouchListener);
+        mSupplierView.setOnTouchListener(mTouchListener);
+        mSupplierContactView.setOnTouchListener(mTouchListener);
+        mSubtractButton.setOnTouchListener(mTouchListener);
+        mAddButton.setOnTouchListener(mTouchListener);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu options from the res/menu/menu_editor.xml file.
-        // This adds menu items to the app bar.
         getMenuInflater().inflate(R.menu.menu_editor, menu);
         return true;
     }
@@ -152,7 +131,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 return true;
 
             case android.R.id.home:
-                // Navigate back to parent activity (CatalogActivity)
 
                 if (!mContentChanged){
                     NavUtils.navigateUpFromSameTask(this);
@@ -255,6 +233,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             Toast.makeText(this, getString(R.string.editor_delete_item_successful),
                     Toast.LENGTH_LONG).show();
         }
+        finish();
     }
 
     @Override
@@ -269,7 +248,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 InventoryEntry.SUPPLIER_CONTACT_COLUMN};
 
         return new CursorLoader(this,
-                InventoryEntry.CONTENT_URI,
+                mContentUri,
                 projection,
                 null,
                 null,
@@ -284,13 +263,35 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         }
 
         data.moveToFirst();
-            mNameView.setText(data.getString(data.getColumnIndex(InventoryEntry.NAME_COLUMN)));
-            mPriceView.setText(data.getString(data.getColumnIndex(InventoryEntry.PRICE_COLUMN)));
-            mQuantityView.setText(data.getString(data.getColumnIndex(InventoryEntry.QUANTITY_COLUMN)));
-            mSupplierView.setText(data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_COLUMN)));
-            mSupplierContactView.setText(data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_CONTACT_COLUMN)));
 
+        mNameView.setText(data.getString(data.getColumnIndex(InventoryEntry.NAME_COLUMN)));
+        mPriceView.setText(data.getString(data.getColumnIndex(InventoryEntry.PRICE_COLUMN)));
+        mQuantityView.setText(data.getString(data.getColumnIndex(InventoryEntry.QUANTITY_COLUMN)));
+        mSupplierView.setText(data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_COLUMN)));
+        final String supplierContactString = data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_CONTACT_COLUMN));
+        mSupplierContactView.setText(data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_CONTACT_COLUMN)));
+
+        if (isValidEmail(supplierContactString)){
+            mContactButton.setVisibility(View.VISIBLE);
+            mContactButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(Intent.ACTION_SENDTO);
+                    intent.setData(Uri.parse("mailto:")); // only email apps should handle this
+                    intent.putExtra(Intent.EXTRA_EMAIL, new String[]{supplierContactString});
+                    startActivity(intent);
+                }
+            });
+        }
     }
+
+    private View.OnTouchListener mTouchListener = new View.OnTouchListener(){
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            mContentChanged = true;
+            return false;
+        }
+    };
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {

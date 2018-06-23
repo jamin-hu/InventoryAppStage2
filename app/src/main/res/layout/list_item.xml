@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Layout for a single list item in the list of pets -->
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -7,6 +6,9 @@
     android:layout_width="match_parent"
     android:descendantFocusability="blocksDescendants"
     android:orientation="horizontal">
+    <!-- Aa interesting so here this is required android:descendantFocusability="blocksDescendants" to make
+     the ListView items clickable once a button was added in each of them... but why? As in what logic causes
+     the ListView items to be unclickable in the first place after adding the button?-->
 
     <LinearLayout
     android:layout_width="0dp"
@@ -19,8 +21,6 @@
         android:id="@+id/name_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-medium"
-        android:textAppearance="?android:textAppearanceMedium"
         android:textColor="#2B3D4D"  />
 
     <TextView
@@ -41,7 +41,6 @@
         />
     </LinearLayout>
 
-
     <Button
         android:id="@+id/sale_button"
         android:layout_margin="16dp"
@@ -51,6 +50,9 @@
         android:text="@string/sale_button"
         android:focusable="false"
         android:focusableInTouchMode="true"
+        android:layout_gravity="center_vertical"
         />
+    <!-- Yes so these    android:focusable="false"   android:focusableInTouchMode="true" are required...
+    hmm... but why... hmmm?-->
 
 </LinearLayout>

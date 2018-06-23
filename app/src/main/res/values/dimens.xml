@@ -10,10 +10,12 @@
      limitations under the License.
 -->
 <resources>
-    <!-- Margin around the floating action button in CatalogActivity -->
     <dimen name="fab_margin">16dp</dimen>
 
-    <!-- Common margin value used throughout the app -->
     <dimen name="activity_margin">16dp</dimen>
+
+    <dimen name="quantity_button_width">30dp</dimen>
+
+    <dimen name="empty_view_image">50dp</dimen>
 </resources>
 
