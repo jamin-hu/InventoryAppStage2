@@ -51,7 +51,6 @@
         android:text="@string/sale_button"
         android:focusable="false"
         android:focusableInTouchMode="true"
-        android:contentDescription="@string/sale_button_description"
         />
 
 </LinearLayout>
