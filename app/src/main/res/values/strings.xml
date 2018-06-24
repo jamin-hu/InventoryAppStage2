@@ -15,7 +15,7 @@
 
     <string name="action_insert_dummy_data">Insert Dummy Data</string>
 
-    <string name="action_delete_all_entries">Delete All Pets</string>
+    <string name="action_delete_all_entries">Delete All Items</string>
 
     <string name="empty_view_title_text">It\'s quite empty here...</string>
 
@@ -67,7 +67,7 @@
 
     <string name="hint_item_supplier">Supplier Name</string>
 
-    <string name="hint_item_supplier_contact">Contact Details</string>
+    <string name="hint_item_supplier_contact">Phone Number</string>
 
     <string name="unit_item_price">euros</string>
 
@@ -75,7 +75,8 @@
 
     <string name="sale_button">Sell 1</string>
 
-    <string name="contact_supplier_button_text">Contact Supplier</string>
+    <string name="contact_supplier_button_text">Call Supplier</string>
 
     <string name="sale_button_description">Sell one piece of this now!</string>
+
 </resources>

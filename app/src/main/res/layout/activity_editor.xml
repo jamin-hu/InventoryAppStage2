@@ -48,6 +48,7 @@
                     android:id="@+id/edit_item_price"
                     android:hint="@string/hint_item_price"
                     android:inputType="number"
+                    android:maxLength="@integer/int_max_digits"
                     style="@style/EditorFieldStyle" />
 
                 <TextView
@@ -76,6 +77,7 @@
                         android:id="@+id/edit_item_quantity"
                         android:hint="@string/hint_item_quantity"
                         android:inputType="number"
+                        android:maxLength="@integer/int_max_digits"
                         style="@style/EditorFieldStyle"/>
 
                     <TextView
@@ -119,7 +121,9 @@
             <EditText
                 android:id="@+id/edit_item_supplier_contact"
                 android:hint="@string/hint_item_supplier_contact"
-                android:inputType="text"
+                android:inputType="phone"
+                android:digits="0123456789+"
+                android:maxLength="@integer/longest_phone_number_length"
                 style="@style/EditorFieldStyle" />
 
             <Button

@@ -1,5 +1,6 @@
 package com.example.jaminhu.inventoryappstage2;
 
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.ContentValues;
@@ -9,10 +10,12 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,6 +26,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.jaminhu.inventoryappstage2.data.InventoryContract.InventoryEntry;
+
+import org.w3c.dom.Text;
+
+import java.util.Locale;
 
 import static android.view.View.GONE;
 
@@ -58,7 +65,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mSubtractButton = (Button) findViewById(R.id.subtract_button);
         mAddButton = (Button) findViewById(R.id.add_button);
         mContactButton = (Button) findViewById(R.id.contact_button);
-        mContactButton.setVisibility(GONE);
 
         mSubtractButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,10 +100,19 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mPriceView.setOnTouchListener(mTouchListener);
         mQuantityView.setOnTouchListener(mTouchListener);
         mSupplierView.setOnTouchListener(mTouchListener);
-        mSupplierView.setOnTouchListener(mTouchListener);
         mSupplierContactView.setOnTouchListener(mTouchListener);
         mSubtractButton.setOnTouchListener(mTouchListener);
         mAddButton.setOnTouchListener(mTouchListener);
+
+        mContactButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String supplierContactString = mSupplierContactView.getText().toString();
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + supplierContactString));
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -157,8 +172,23 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
         String priceString = mPriceView.getText().toString().trim();
 
-        if (TextUtils.isEmpty(nameString) || TextUtils.isEmpty(priceString)){
-            Toast.makeText(this, "Item requires a valid name and price",
+        String supplierString = mSupplierView.getText().toString().trim();
+
+        String supplierContactString = mSupplierContactView.getText().toString();
+
+        String supplierPhoneString;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            supplierPhoneString = PhoneNumberUtils.formatNumber(supplierContactString, Locale.getDefault().getCountry());
+        } else {
+            supplierPhoneString = PhoneNumberUtils.formatNumber(supplierContactString);
+        }
+
+        if (TextUtils.isEmpty(nameString) ||
+                TextUtils.isEmpty(priceString)||
+                TextUtils.isEmpty(supplierString)||
+                TextUtils.isEmpty(supplierContactString)){
+            Toast.makeText(this, "All fields should be populated",
                     Toast.LENGTH_LONG).show();
             return;
         }
@@ -173,25 +203,13 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             quantity = Integer.parseInt(quantityString);
         }
 
-        String supplier = "Unknown";
-        String supplierString = mSupplierView.getText().toString().trim();
-        if (!TextUtils.isEmpty(supplierString)){
-            supplier = supplierString;
-        }
-
-        String supplierContact = "Unknown";
-        String supplierContactString = mSupplierContactView.getText().toString().trim();
-        if (!TextUtils.isEmpty(supplierContactString)){
-            supplierContact = supplierContactString;
-        }
-
         ContentValues values = new ContentValues();
 
         values.put(InventoryEntry.NAME_COLUMN, nameString);
         values.put(InventoryEntry.PRICE_COLUMN, priceInt);
         values.put(InventoryEntry.QUANTITY_COLUMN, quantity);
-        values.put(InventoryEntry.SUPPLIER_COLUMN, supplier);
-        values.put(InventoryEntry.SUPPLIER_CONTACT_COLUMN, supplierContact);
+        values.put(InventoryEntry.SUPPLIER_COLUMN, supplierString);
+        values.put(InventoryEntry.SUPPLIER_CONTACT_COLUMN, supplierPhoneString);
 
         if (mContentUri == null) {
 
@@ -268,21 +286,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mPriceView.setText(data.getString(data.getColumnIndex(InventoryEntry.PRICE_COLUMN)));
         mQuantityView.setText(data.getString(data.getColumnIndex(InventoryEntry.QUANTITY_COLUMN)));
         mSupplierView.setText(data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_COLUMN)));
-        final String supplierContactString = data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_CONTACT_COLUMN));
         mSupplierContactView.setText(data.getString(data.getColumnIndex(InventoryEntry.SUPPLIER_CONTACT_COLUMN)));
 
-        if (isValidEmail(supplierContactString)){
-            mContactButton.setVisibility(View.VISIBLE);
-            mContactButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(Intent.ACTION_SENDTO);
-                    intent.setData(Uri.parse("mailto:")); // only email apps should handle this
-                    intent.putExtra(Intent.EXTRA_EMAIL, new String[]{supplierContactString});
-                    startActivity(intent);
-                }
-            });
-        }
     }
 
     private View.OnTouchListener mTouchListener = new View.OnTouchListener(){
@@ -355,7 +360,4 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         alertDialog.show();
     }
 
-    private static boolean isValidEmail(String email) {
-        return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
-    }
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <integer name="longest_phone_number_length">16</integer>
+
+    <integer name="int_max_digits">8</integer>
+
+</resources>

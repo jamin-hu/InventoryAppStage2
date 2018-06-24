@@ -119,12 +119,22 @@ still not sure what this does exactly... and why necessary... yet...
 
         Integer price = values.getAsInteger(InventoryEntry.PRICE_COLUMN); //why is this variable type Integer instead of int
         if (price == null || price < 0 ) {
-            throw new IllegalArgumentException("Pet requires a valid gender");
+            throw new IllegalArgumentException("Pet requires a valid price");
         }
 
         Integer quantity = values.getAsInteger(InventoryEntry.QUANTITY_COLUMN);
         if (quantity != null && quantity < 0) { //hmmmmmmmm compare with if (weight == null || weight < 0 )...
-            throw new IllegalArgumentException("Pet requires a valid weight");
+            throw new IllegalArgumentException("Item requires a valid quantity");
+        }
+
+        String supplier = values.getAsString(InventoryEntry.SUPPLIER_COLUMN);
+        if (supplier == null) {
+            throw new IllegalArgumentException("Item requires a supplier name");
+        }
+
+        String supplierContact = values.getAsString(InventoryEntry.SUPPLIER_CONTACT_COLUMN);
+        if (supplierContact == null) {
+            throw new IllegalArgumentException("Item requires a phone number");
         }
 
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
@@ -196,21 +206,35 @@ still not sure what this does exactly... and why necessary... yet...
         if (values.containsKey(InventoryEntry.NAME_COLUMN)) {
             String name = values.getAsString(InventoryEntry.NAME_COLUMN);
             if (name == null) {
-                throw new IllegalArgumentException("Pet requires a name");
+                throw new IllegalArgumentException("Item requires a name");
             }
         }
 
         if (values.containsKey(InventoryEntry.PRICE_COLUMN)) {
             Integer price = values.getAsInteger(InventoryEntry.PRICE_COLUMN);
             if (price == null || price < 0) {
-                throw new IllegalArgumentException("Pet requires valid gender");
+                throw new IllegalArgumentException("Item requires valid price");
             }
         }
 
         if (values.containsKey(InventoryEntry.QUANTITY_COLUMN)) {
             Integer quantity = values.getAsInteger(InventoryEntry.QUANTITY_COLUMN);
             if (quantity != null && quantity < 0) {
-                throw new IllegalArgumentException("Pet requires valid weight");
+                throw new IllegalArgumentException("Item requires valid quantity");
+            }
+        }
+
+        if (values.containsKey(InventoryEntry.SUPPLIER_COLUMN)) {
+            String supplier = values.getAsString(InventoryEntry.SUPPLIER_COLUMN);
+            if (supplier == null) {
+                throw new IllegalArgumentException("Item requires a supplier name");
+            }
+        }
+
+        if (values.containsKey(InventoryEntry.SUPPLIER_CONTACT_COLUMN)) {
+            String supplierContact = values.getAsString(InventoryEntry.SUPPLIER_CONTACT_COLUMN);
+            if (supplierContact == null) {
+                throw new IllegalArgumentException("Item requires a phone number");
             }
         }
 
